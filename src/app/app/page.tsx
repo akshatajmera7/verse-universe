@@ -27,7 +27,6 @@ export default function AppPage() {
     activities,
     setUser,
     loadParsedData,
-    wipeAllData,
     initFromStorage,
   } = useUniverseStore();
 
@@ -39,6 +38,7 @@ export default function AppPage() {
   const [manualTokenInput, setManualTokenInput] = useState('');
   const syncInProgressRef = useRef(false);
 
+  // Only sync when explicitly requested by user (or very first initial onboarding)
   const performSync = async (token: string) => {
     if (syncInProgressRef.current) return;
     syncInProgressRef.current = true;
@@ -46,22 +46,20 @@ export default function AppPage() {
     setSyncError(null);
     setSyncStatus('Connecting to your Google YouTube account...');
 
-    // Clear previous sample data immediately so random artists never linger!
-    wipeAllData();
-
     try {
       const result = await syncRealUserYouTubeData(token, (progress) => {
         setSyncStatus(progress.status);
       });
 
-      // Clear any previous sample data and write the real user data!
+      // Update state with newly fetched data without flashing empty screen
       loadParsedData(result);
       localStorage.setItem('verse_has_synced_real_data', 'true');
+      setSyncStatus(`Updated! Synced ${result.activities.length} personal YouTube records.`);
 
       try {
         confetti({
-          particleCount: 140,
-          spread: 100,
+          particleCount: 120,
+          spread: 90,
           origin: { y: 0.55 },
           colors: ['#06b6d4', '#8b5cf6', '#ec4899', '#38bdf8', '#fbbf24'],
         });
@@ -80,6 +78,9 @@ export default function AppPage() {
 
     const handleAuth = async () => {
       const supabase = getSupabaseClient();
+      const hasExistingData =
+        typeof window !== 'undefined' &&
+        localStorage.getItem('verse_has_synced_real_data') === 'true';
 
       // 1. Check for provider_token in hash (#provider_token=... or access_token=...)
       if (typeof window !== 'undefined' && window.location.hash) {
@@ -88,7 +89,10 @@ export default function AppPage() {
         if (hashPToken) {
           localStorage.setItem('google_yt_provider_token', hashPToken);
           setProviderToken(hashPToken);
-          performSync(hashPToken);
+          // Only auto-fetch if no data has ever been synced yet
+          if (!hasExistingData) {
+            performSync(hashPToken);
+          }
           return;
         }
       }
@@ -99,7 +103,7 @@ export default function AppPage() {
         const code = urlParams.get('code');
         if (code) {
           try {
-            setSyncStatus('Exchanging Google authentication code...');
+            setSyncStatus('Connecting to your Google profile...');
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
             if (!error && data.session) {
               const session = data.session;
@@ -118,9 +122,11 @@ export default function AppPage() {
               if (pToken) {
                 localStorage.setItem('google_yt_provider_token', pToken);
                 setProviderToken(pToken);
-                // Clean up URL without page reload
                 window.history.replaceState({}, document.title, window.location.pathname);
-                performSync(pToken);
+                // Only auto-fetch on the very first initial sign in
+                if (!hasExistingData) {
+                  performSync(pToken);
+                }
                 return;
               }
             }
@@ -130,7 +136,7 @@ export default function AppPage() {
         }
       }
 
-      // 3. Check existing Supabase session and listen for auth state change
+      // 3. Check existing Supabase session - store token but DO NOT refetch automatically
       if (supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
@@ -148,29 +154,22 @@ export default function AppPage() {
           if (session.provider_token) {
             setProviderToken(session.provider_token);
             localStorage.setItem('google_yt_provider_token', session.provider_token);
-            if (!localStorage.getItem('verse_has_synced_real_data')) {
-              performSync(session.provider_token);
-              return;
-            }
           }
         }
 
+        // Listen for token updates without auto-refetching
         supabase.auth.onAuthStateChange(async (event, session) => {
           if (session?.provider_token) {
             setProviderToken(session.provider_token);
             localStorage.setItem('google_yt_provider_token', session.provider_token);
-            performSync(session.provider_token);
           }
         });
       }
 
-      // 4. Fallback to localStorage saved token
+      // 4. Fallback to localStorage saved token (only populate state, do NOT auto-refetch)
       const savedToken = localStorage.getItem('google_yt_provider_token');
       if (savedToken) {
         setProviderToken(savedToken);
-        if (!localStorage.getItem('verse_has_synced_real_data')) {
-          performSync(savedToken);
-        }
       }
     };
 
@@ -184,7 +183,7 @@ export default function AppPage() {
       {/* Top HUD */}
       <TopNav />
 
-      {/* Google Sync Floating Banner */}
+      {/* Google Sync Floating Banner with Manual Re-sync Button */}
       {providerToken ? (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -194,7 +193,9 @@ export default function AppPage() {
           <div className="flex items-center gap-2 text-cyan-200">
             <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
             <span className="font-medium">
-              {syncStatus || 'Google Account Connected! Syncing your personal YouTube library.'}
+              {activities.length > 0
+                ? (syncStatus || `Google Connected (${activities.length} records loaded). Click Re-sync to refresh.`)
+                : (syncStatus || 'Google Account Connected. Click Sync to fetch your YouTube library.')}
             </span>
           </div>
           <motion.button
@@ -202,10 +203,10 @@ export default function AppPage() {
             whileTap={{ scale: 0.97 }}
             onClick={() => performSync(providerToken)}
             disabled={syncingGoogle}
-            className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50"
+            className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${syncingGoogle ? 'animate-spin' : ''}`} />
-            <span>{syncingGoogle ? 'Syncing...' : 'Sync Real YouTube Account'}</span>
+            <span>{syncingGoogle ? 'Re-syncing...' : 'Re-sync / Refresh'}</span>
           </motion.button>
         </motion.div>
       ) : (
@@ -222,7 +223,7 @@ export default function AppPage() {
             </Link>
             <button
               onClick={() => setShowManualTokenModal(true)}
-              className="px-2.5 py-1 rounded-lg glass-button text-slate-300 hover:text-white flex items-center gap-1 transition-colors"
+              className="px-2.5 py-1 rounded-lg glass-button text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
             >
               <KeyRound className="w-3 h-3 text-cyan-400" />
               <span>Enter OAuth Token</span>
@@ -252,7 +253,7 @@ export default function AppPage() {
                 <span>Connect Google YouTube Token</span>
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                If your browser didn&apos;t automatically pass the Google OAuth token, paste your Google OAuth Access Token here to instantly load your real YouTube music library.
+                If your browser didn&apos;t automatically pass the Google OAuth token, paste your Google OAuth Access Token here to load your real YouTube music library.
               </p>
               <input
                 type="text"
@@ -264,7 +265,7 @@ export default function AppPage() {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setShowManualTokenModal(false)}
-                  className="px-3 py-1.5 rounded-xl glass-button text-xs text-slate-400 hover:text-white"
+                  className="px-3 py-1.5 rounded-xl glass-button text-xs text-slate-400 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -277,7 +278,7 @@ export default function AppPage() {
                       performSync(manualTokenInput.trim());
                     }
                   }}
-                  className="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md"
+                  className="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md cursor-pointer"
                 >
                   Sync Now
                 </button>
@@ -287,9 +288,9 @@ export default function AppPage() {
         )}
       </AnimatePresence>
 
-      {/* Full Screen Syncing Overlay with AnimatePresence */}
+      {/* Initial Loading Overlay ONLY if there's no data in cache yet */}
       <AnimatePresence>
-        {syncingGoogle && (
+        {syncingGoogle && activities.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -365,7 +366,7 @@ export default function AppPage() {
                     whileTap={{ scale: 0.96 }}
                     onClick={() => performSync(providerToken)}
                     disabled={syncingGoogle}
-                    className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 font-bold text-sm transition-all shadow-xl shadow-cyan-500/25 flex items-center gap-2"
+                    className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 font-bold text-sm transition-all shadow-xl shadow-cyan-500/25 flex items-center gap-2 cursor-pointer"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncingGoogle ? 'animate-spin' : ''}`} />
                     <span>{syncingGoogle ? 'Syncing...' : 'Sync Real YouTube Account'}</span>
