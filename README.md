@@ -96,6 +96,33 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## 🚀 Deploying to Vercel
+
+1. **Import to Vercel**:
+   - Push your code to GitHub (or use [akshatajmera7/verse-universe](https://github.com/akshatajmera7/verse-universe)).
+   - Import the project on [Vercel](https://vercel.com/new).
+
+2. **Add Environment Variables in Vercel**:
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase URL (`https://nhkqvywfiblzbzbezodj.supabase.co`)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase Anon Key
+   - `NEXT_PUBLIC_SITE_URL`: Your Vercel deployment URL (e.g. `https://verse-universe.vercel.app`)
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`: Your Google OAuth Client ID
+
+3. **Update Supabase Authentication**:
+   - Go to **Supabase Dashboard** -> **Authentication** -> **URL Configuration**.
+   - Set **Site URL** to: `https://your-app.vercel.app`
+   - Add to **Redirect URLs**:
+     - `https://your-app.vercel.app/**`
+     - `https://your-app.vercel.app/app`
+     - `https://your-app.vercel.app/auth`
+
+4. **Update Google Cloud Console**:
+   - Go to **Google Cloud Console** -> **Credentials** -> Select your Web Client ID.
+   - Add your Vercel URL to **Authorized JavaScript origins**: `https://your-app.vercel.app`
+   - In **OAuth consent screen**, add `vercel.app` to **Authorized domains**.
+
+---
+
 ## 📂 Project Structure
 
 ```
