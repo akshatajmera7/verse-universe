@@ -23,6 +23,12 @@ export default function LandingPage() {
 
   useEffect(() => {
     initFromStorage();
+    if (typeof window !== 'undefined' && window.location.search) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('code') || params.has('error')) {
+        window.location.href = `/app${window.location.search}`;
+      }
+    }
   }, [initFromStorage]);
 
   return (
