@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ArtistEntity } from '@/types';
@@ -109,21 +109,29 @@ export function ConstellationLines({ artists, reducedMotion = false }: Constella
     return colors;
   }, [pulseData]);
 
+  const progressRef = useRef<number[]>([]);
+  useEffect(() => {
+    progressRef.current = pulseData.map((p) => p.progress);
+  }, [pulseData]);
+
   useFrame((_, delta) => {
     if (reducedMotion || pulseData.length === 0 || !pulsesRef.current) return;
 
     const posAttr = pulsesRef.current.geometry.attributes.position as THREE.BufferAttribute;
     if (!posAttr) return;
 
+    const progressList = progressRef.current;
     for (let i = 0; i < pulseData.length; i++) {
+      if (i >= progressList.length) break;
       const p = pulseData[i];
-      p.progress += delta * p.speed;
-      if (p.progress > 1) {
-        p.progress = 0;
+      let prog = progressList[i] + delta * p.speed;
+      if (prog > 1) {
+        prog = 0;
       }
+      progressList[i] = prog;
 
       // Interpolate along the constellation line
-      const currentPos = new THREE.Vector3().lerpVectors(p.start, p.end, p.progress);
+      const currentPos = new THREE.Vector3().lerpVectors(p.start, p.end, prog);
       posAttr.setXYZ(i, currentPos.x, currentPos.y, currentPos.z);
     }
 

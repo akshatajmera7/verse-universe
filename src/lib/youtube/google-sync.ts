@@ -21,16 +21,32 @@ export interface GoogleSyncProgress {
  */
 export async function syncRealUserYouTubeData(
   accessToken: string,
-  onProgress?: (progress: GoogleSyncProgress) => void
+  onProgress?: (progress: GoogleSyncProgress) => void,
+  customApiKey?: string
 ): Promise<ParseResult> {
   const activities: NormalizedActivity[] = [];
   const seenIds = new Set<string>();
   let lastGoogleApiError: string | null = null;
 
+  const apiKey =
+    customApiKey ||
+    process.env.NEXT_PUBLIC_YOUTUBE_API_KEY ||
+    process.env.YOUTUBE_API_KEY ||
+    '';
+
+  const withKey = (url: string) => {
+    if (!apiKey) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}key=${encodeURIComponent(apiKey)}`;
+  };
+
   const headers: Record<string, string> = {
     Authorization: `Bearer ${accessToken}`,
     Accept: 'application/json',
   };
+  if (apiKey) {
+    headers['x-goog-api-key'] = apiKey;
+  }
 
   // 1. Fetch User Channel Profile & Related Playlists
   let userLikesPlaylistId = 'LL';
@@ -41,7 +57,7 @@ export async function syncRealUserYouTubeData(
     });
 
     const channelRes: Response = await fetch(
-      'https://www.googleapis.com/youtube/v3/channels?mine=true&part=snippet,contentDetails,statistics',
+      withKey('https://www.googleapis.com/youtube/v3/channels?mine=true&part=snippet,contentDetails,statistics'),
       { headers }
     );
 
@@ -80,7 +96,7 @@ export async function syncRealUserYouTubeData(
         const reqUrl: string = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${plId}&part=snippet,contentDetails&maxResults=50${
           pageToken ? `&pageToken=${pageToken}` : ''
         }`;
-        const plRes: Response = await fetch(reqUrl, { headers });
+        const plRes: Response = await fetch(withKey(reqUrl), { headers });
 
         if (plRes.ok) {
           const plData: any = await plRes.json();
@@ -154,7 +170,7 @@ export async function syncRealUserYouTubeData(
       const ratedUrl: string = `https://www.googleapis.com/youtube/v3/videos?myRating=like&part=snippet,contentDetails&maxResults=50${
         likedPageToken ? `&pageToken=${likedPageToken}` : ''
       }`;
-      const likedRes: Response = await fetch(ratedUrl, { headers });
+      const likedRes: Response = await fetch(withKey(ratedUrl), { headers });
 
       if (likedRes.ok) {
         const likedData: any = await likedRes.json();
@@ -225,7 +241,7 @@ export async function syncRealUserYouTubeData(
     });
 
     const playlistsRes: Response = await fetch(
-      'https://www.googleapis.com/youtube/v3/playlists?mine=true&part=snippet,contentDetails&maxResults=25',
+      withKey('https://www.googleapis.com/youtube/v3/playlists?mine=true&part=snippet,contentDetails&maxResults=25'),
       { headers }
     );
 
@@ -242,7 +258,7 @@ export async function syncRealUserYouTubeData(
             const pUrl: string = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${playlistId}&part=snippet,contentDetails&maxResults=50${
               plItemToken ? `&pageToken=${plItemToken}` : ''
             }`;
-            const itemsRes: Response = await fetch(pUrl, { headers });
+            const itemsRes: Response = await fetch(withKey(pUrl), { headers });
 
             if (itemsRes.ok) {
               const itemsData: any = await itemsRes.json();
@@ -312,7 +328,7 @@ export async function syncRealUserYouTubeData(
       const subsUrl: string = `https://www.googleapis.com/youtube/v3/subscriptions?mine=true&part=snippet&maxResults=50${
         subsToken ? `&pageToken=${subsToken}` : ''
       }`;
-      const subsRes: Response = await fetch(subsUrl, { headers });
+      const subsRes: Response = await fetch(withKey(subsUrl), { headers });
 
       if (subsRes.ok) {
         const subsData: any = await subsRes.json();
@@ -361,7 +377,7 @@ export async function syncRealUserYouTubeData(
 
       for (const chanId of subscribedChannelIds.slice(0, 6)) {
         const searchRes: Response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?channelId=${chanId}&part=snippet&order=viewCount&maxResults=5&type=video`,
+          withKey(`https://www.googleapis.com/youtube/v3/search?channelId=${chanId}&part=snippet&order=viewCount&maxResults=5&type=video`),
           { headers }
         );
 

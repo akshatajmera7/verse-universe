@@ -3,12 +3,13 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import * as THREE from 'three';
 import { useUniverseStore } from '@/lib/store/useUniverseStore';
 
 export function UniverseCameraManager() {
   const { camera } = useThree();
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const { focusedTarget, reducedMotion } = useUniverseStore();
 
   const targetVec = useRef(new THREE.Vector3(0, 0, 0));

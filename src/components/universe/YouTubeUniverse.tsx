@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Html, Float, Sparkles } from '@react-three/drei';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
+import { Billboard, Text, Float, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { ChannelEntity } from '@/types';
 import { useUniverseStore } from '@/lib/store/useUniverseStore';
@@ -47,7 +47,7 @@ function ChannelPlanet({
     }
   });
 
-  const handleClick = (e: any) => {
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     selectObject({ type: 'channel', data: channel });
     setFocusedTarget([pos[0], pos[1], pos[2]]);
@@ -120,31 +120,33 @@ function ChannelPlanet({
           />
         </mesh>
 
-        {/* Floating Label */}
+        {/* Floating 3D Billboard Label */}
         {(showLabels || hovered || isSelected) && (
-          <Html
-            position={[0, size + 1.3, 0]}
-            center
-            distanceFactor={45}
-            style={{ pointerEvents: 'none' }}
-          >
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 border flex items-center gap-1.5 shadow-2xl backdrop-blur-md ${
-                isSelected
-                  ? 'bg-amber-400 text-black font-bold border-white scale-110 shadow-amber-500/50'
-                  : hovered
-                  ? 'bg-slate-900/95 text-amber-200 border-amber-400/80 scale-105 shadow-amber-500/30'
-                  : 'bg-slate-950/80 text-slate-200 border-white/20'
-              }`}
+          <Billboard position={[0, size + 1.2, 0]}>
+            <Text
+              position={[0, 0.4, 0]}
+              fontSize={0.85}
+              color={isSelected ? '#fbbf24' : hovered ? '#ffffff' : '#fef08a'}
+              anchorX="center"
+              anchorY="middle"
+              outlineWidth={0.07}
+              outlineColor="#030712"
+              fontWeight={700}
             >
-              <span
-                className="w-2 h-2 rounded-full inline-block animate-pulse"
-                style={{ backgroundColor: channelColor }}
-              />
-              <span className="font-semibold">📺 {channel.name}</span>
-              <span className="opacity-75 text-[10px] font-mono">{channel.totalViews} views</span>
-            </div>
-          </Html>
+              {channel.name}
+            </Text>
+            <Text
+              position={[0, -0.4, 0]}
+              fontSize={0.52}
+              color="#cbd5e1"
+              anchorX="center"
+              anchorY="middle"
+              outlineWidth={0.04}
+              outlineColor="#030712"
+            >
+              {`${channel.totalViews} views`}
+            </Text>
+          </Billboard>
         )}
       </Float>
     </group>

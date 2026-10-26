@@ -49,11 +49,24 @@ class WebGLErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
   }
 }
 
+// Filter benign internal R3F THREE.Clock deprecation warning emitted in Three.js r183+
+if (typeof window !== 'undefined') {
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('THREE.Clock: This module has been deprecated')
+    ) {
+      return;
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
 export function UniverseCanvas() {
   const {
     artists,
     mode,
-    timeFilter,
     metricMode,
     graphicsQuality,
     reducedMotion,
@@ -61,11 +74,13 @@ export function UniverseCanvas() {
     clearSelection,
   } = useUniverseStore();
 
-  const [mounted, setMounted] = useState(false);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
-    setMounted(true);
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         clearSelection();

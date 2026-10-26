@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Html, Trail } from '@react-three/drei';
+import React, { useRef, useState, useMemo } from 'react';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
+import { Billboard, Text, Trail } from '@react-three/drei';
 import * as THREE from 'three';
 import { SongEntity } from '@/types';
 import { useUniverseStore } from '@/lib/store/useUniverseStore';
@@ -27,7 +27,19 @@ export function SongStar({
   const meshRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
-  const angleRef = useRef(Math.random() * Math.PI * 2);
+
+  // Deterministic starting orbital angle based on song id
+  const initialAngle = useMemo(() => {
+    let hash = 0;
+    const str = song.id || song.cleanTitle || 'song';
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return ((Math.abs(hash) % 1000) / 1000) * Math.PI * 2;
+  }, [song.id, song.cleanTitle]);
+
+  const angleRef = useRef(initialAngle);
 
   const { selectedObject, selectObject, setFocusedTarget } = useUniverseStore();
   const isSelected = selectedObject?.type === 'song' && selectedObject.data.id === song.id;
@@ -53,7 +65,7 @@ export function SongStar({
     }
   });
 
-  const handleClick = (e: any) => {
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     selectObject({ type: 'song', data: song });
     if (meshRef.current) {
@@ -115,28 +127,20 @@ export function SongStar({
             />
           </mesh>
 
-          {/* Floating Label */}
+          {/* Floating 3D Billboard Label */}
           {(hovered || isSelected || (showLabels && song.totalPlays >= 3)) && (
-            <Html
-              position={[0, starSize + 0.65, 0]}
-              center
-              distanceFactor={35}
-              style={{ pointerEvents: 'none' }}
-            >
-              <div
-                className={`px-2.5 py-1 rounded-full text-[11px] whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 shadow-xl backdrop-blur-md ${
-                  isSelected
-                    ? 'bg-cyan-400 text-black font-bold border-white scale-110 shadow-cyan-400/50'
-                    : hovered
-                    ? 'bg-slate-900/95 text-cyan-200 border-cyan-400/80 scale-105 shadow-cyan-500/30'
-                    : 'bg-black/75 text-slate-200 border-white/15'
-                }`}
+            <Billboard position={[0, starSize + 0.65, 0]}>
+              <Text
+                fontSize={0.4}
+                color={isSelected ? '#22d3ee' : hovered ? '#ffffff' : '#94a3b8'}
+                anchorX="center"
+                anchorY="middle"
+                outlineWidth={0.035}
+                outlineColor="#030712"
               >
-                <span className="text-amber-400">♫</span>
-                <span className="font-medium truncate max-w-[150px]">{song.cleanTitle}</span>
-                <span className="opacity-75 text-[10px] font-mono">({song.totalPlays})</span>
-              </div>
-            </Html>
+                {song.cleanTitle.length > 22 ? `${song.cleanTitle.slice(0, 20)}...` : song.cleanTitle}
+              </Text>
+            </Billboard>
           )}
         </mesh>
       </Trail>

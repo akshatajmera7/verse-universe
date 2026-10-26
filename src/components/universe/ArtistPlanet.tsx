@@ -2,7 +2,8 @@
 
 import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, Float, Sparkles, MeshDistortMaterial } from '@react-three/drei';
+import { Billboard, Text, Float, Sparkles, MeshDistortMaterial } from '@react-three/drei';
+import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ArtistEntity } from '@/types';
 import { useUniverseStore } from '@/lib/store/useUniverseStore';
@@ -71,7 +72,7 @@ export function ArtistPlanet({
     }
   });
 
-  const handleClick = (e: any) => {
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     selectObject({ type: 'artist', data: artist });
     setFocusedTarget([pos[0], pos[1], pos[2]]);
@@ -182,35 +183,35 @@ export function ArtistPlanet({
           );
         })}
 
-        {/* Planet Floating Label */}
+        {/* Planet Floating 3D Billboard Label */}
         {(showLabels || hovered || isSelected) && (
-          <Html
-            position={[0, planetSize + 1.3, 0]}
-            center
-            distanceFactor={45}
-            style={{ pointerEvents: 'none' }}
-          >
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-300 border flex items-center gap-1.5 shadow-2xl backdrop-blur-md ${
-                isSelected
-                  ? 'bg-cyan-400 text-black font-bold border-white scale-110 shadow-cyan-500/50'
-                  : hovered
-                  ? 'bg-slate-900/95 text-cyan-200 border-cyan-400/80 scale-105 shadow-cyan-500/30'
-                  : 'bg-slate-950/80 text-slate-200 border-white/20'
-              }`}
+          <Billboard position={[0, planetSize + 1.2, 0]}>
+            <Text
+              position={[0, 0.4, 0]}
+              fontSize={0.85}
+              color={isSelected ? '#22d3ee' : hovered ? '#ffffff' : '#f1f5f9'}
+              anchorX="center"
+              anchorY="middle"
+              outlineWidth={0.07}
+              outlineColor="#030712"
+              fontWeight={700}
             >
-              <span
-                className="w-2 h-2 rounded-full inline-block animate-pulse"
-                style={{ backgroundColor: baseColor }}
-              />
-              <span className="font-semibold tracking-wide">{artist.name}</span>
-              <span className="opacity-70 text-[10px] font-mono">
-                {metricMode === 'plays'
-                  ? `${artist.totalPlays} plays`
-                  : `~${Math.round(artist.estDurationSeconds / 60)}m`}
-              </span>
-            </div>
-          </Html>
+              {artist.name}
+            </Text>
+            <Text
+              position={[0, -0.4, 0]}
+              fontSize={0.52}
+              color={isSelected ? '#67e8f9' : '#94a3b8'}
+              anchorX="center"
+              anchorY="middle"
+              outlineWidth={0.04}
+              outlineColor="#030712"
+            >
+              {metricMode === 'plays'
+                ? `${artist.totalPlays} plays`
+                : `~${Math.round(artist.estDurationSeconds / 60)}m`}
+            </Text>
+          </Billboard>
         )}
       </Float>
     </group>
