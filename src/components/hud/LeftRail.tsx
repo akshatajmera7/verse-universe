@@ -34,25 +34,25 @@ export function LeftRail() {
       initial={{ opacity: 0, x: -30 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-      className="hidden lg:flex flex-col w-64 h-[calc(100vh-4rem)] p-4 glass-panel border-r border-white/10 z-20 space-y-6 backdrop-blur-xl"
+      className="hidden lg:flex flex-col w-64 h-[calc(100vh-4rem)] p-4 cosmic-glass border-r border-white/10 z-20 space-y-5 backdrop-blur-xl"
     >
       {/* Quick Stats Widget */}
       {analytics && (
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="bg-slate-900/60 rounded-2xl p-3.5 border border-white/10 space-y-3 shadow-lg"
+          className="bg-slate-900/70 rounded-2xl p-3.5 border border-cyan-500/20 space-y-3 shadow-lg"
         >
           <div className="flex items-center justify-between text-xs font-mono uppercase text-slate-400">
             <span className="flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Universe Metrics</span>
+              <span>Cosmic Telemetry</span>
             </span>
-            <span className="text-cyan-400 font-bold">{analytics.totalActivityCount}</span>
+            <span className="text-cyan-400 font-bold font-mono">{analytics.totalActivityCount}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-black/50 p-2.5 rounded-xl border border-white/5">
-              <div className="text-[10px] text-slate-400 mb-0.5">Active Streak</div>
+              <div className="text-[10px] text-slate-400 mb-0.5">Solar Streak</div>
               <div className="text-sm font-bold text-amber-400 flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5" />
                 <span>{analytics.streak.currentStreak} Days</span>
@@ -60,7 +60,7 @@ export function LeftRail() {
             </div>
 
             <div className="bg-black/50 p-2.5 rounded-xl border border-white/5">
-              <div className="text-[10px] text-slate-400 mb-0.5">Est. Hours</div>
+              <div className="text-[10px] text-slate-400 mb-0.5">Lightyears</div>
               <div className="text-sm font-bold text-cyan-300">
                 {analytics.totalEstHours}h
               </div>
@@ -86,6 +86,15 @@ export function LeftRail() {
             const isSelected =
               selectedObject?.type === 'artist' && selectedObject.data.id === art.id;
 
+            const badgeColor =
+              idx === 0
+                ? 'text-amber-400 bg-amber-400/10 border-amber-400/30'
+                : idx === 1
+                ? 'text-cyan-300 bg-cyan-400/10 border-cyan-400/30'
+                : idx === 2
+                ? 'text-purple-300 bg-purple-400/10 border-purple-400/30'
+                : 'text-slate-400 bg-white/5 border-white/10';
+
             return (
               <motion.button
                 key={art.id}
@@ -97,11 +106,14 @@ export function LeftRail() {
                 onClick={() => handleArtistClick(art)}
                 className={`w-full p-2.5 rounded-xl transition-all flex items-center justify-between text-xs group border shadow-sm ${
                   isSelected
-                    ? 'bg-cyan-500/25 text-cyan-100 border-cyan-500/50 shadow-cyan-500/20 shadow-md'
+                    ? 'cosmic-glass-active text-cyan-100'
                     : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/5'
                 }`}
               >
-                <div className="flex items-center gap-2.5 truncate">
+                <div className="flex items-center gap-2 truncate">
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border shrink-0 ${badgeColor}`}>
+                    #{idx + 1}
+                  </span>
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm transition-transform group-hover:scale-125"
                     style={{ backgroundColor: art.color }}

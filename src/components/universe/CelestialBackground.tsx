@@ -31,6 +31,9 @@ function createCircleTexture(): THREE.CanvasTexture | undefined {
   return texture;
 }
 
+const _tempHead = new THREE.Vector3();
+const _tempTail = new THREE.Vector3();
+
 export function CelestialBackground({
   reducedMotion = false,
   particleCount = 2800,
@@ -161,11 +164,11 @@ export function CelestialBackground({
               );
             }
 
-            const head = m.pos.clone().addScaledVector(m.dir, m.speed * m.life);
-            const tail = head.clone().addScaledVector(m.dir, -m.length);
+            _tempHead.copy(m.pos).addScaledVector(m.dir, m.speed * m.life);
+            _tempTail.copy(_tempHead).addScaledVector(m.dir, -m.length);
 
-            attr.setXYZ(idx * 2, head.x, head.y, head.z);
-            attr.setXYZ(idx * 2 + 1, tail.x, tail.y, tail.z);
+            attr.setXYZ(idx * 2, _tempHead.x, _tempHead.y, _tempHead.z);
+            attr.setXYZ(idx * 2 + 1, _tempTail.x, _tempTail.y, _tempTail.z);
           });
           attr.needsUpdate = true;
         }

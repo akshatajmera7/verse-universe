@@ -38,7 +38,7 @@ export function UniverseControls() {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-2xl glass-panel shadow-2xl border border-white/15 text-xs backdrop-blur-xl"
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-2 rounded-2xl cosmic-glass shadow-2xl border border-cyan-500/30 text-xs backdrop-blur-2xl"
     >
       {/* Mode Switcher */}
       <div className="flex items-center bg-black/40 rounded-xl p-1 border border-white/5 mr-1">

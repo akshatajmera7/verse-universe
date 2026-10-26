@@ -29,7 +29,7 @@ function ChannelPlanet({
 
   const pos = channel.position || [0, 0, 0];
   const channelColor = getCelestialColor(channel.name);
-  const color = new THREE.Color(channelColor);
+  const color = React.useMemo(() => new THREE.Color(channelColor), [channelColor]);
   const size = Math.min(4.5, Math.max(1.2, Math.log10(channel.totalViews + 1) * 1.8));
 
   useFrame((state, delta) => {

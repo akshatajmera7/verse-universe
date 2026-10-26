@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Billboard, Text, Float, Sparkles, MeshDistortMaterial } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
@@ -44,7 +44,7 @@ export function ArtistPlanet({
 
   // Planet color
   const baseColor = artist.color || '#06b6d4';
-  const planetColor = new THREE.Color(baseColor);
+  const planetColor = useMemo(() => new THREE.Color(baseColor), [baseColor]);
 
   useFrame((state, delta) => {
     if (!reducedMotion) {
@@ -92,12 +92,12 @@ export function ArtistPlanet({
         {/* Shimmering Stardust Cloud around the Artist */}
         {!reducedMotion && (
           <Sparkles
-            count={hovered || isSelected ? 35 : 18}
-            scale={planetSize * 3.2}
-            size={hovered || isSelected ? 3.5 : 2.0}
+            count={hovered || isSelected ? 30 : 14}
+            scale={planetSize * 3.0}
+            size={hovered || isSelected ? 3.0 : 1.8}
             speed={0.4}
             color={baseColor}
-            opacity={0.7}
+            opacity={0.65}
           />
         )}
 
@@ -111,25 +111,25 @@ export function ArtistPlanet({
           }}
           onPointerOut={() => setHovered(false)}
         >
-          <sphereGeometry args={[planetSize, 48, 48]} />
+          <sphereGeometry args={[planetSize, hovered || isSelected ? 32 : 22, hovered || isSelected ? 32 : 22]} />
           <MeshDistortMaterial
             color={planetColor}
             emissive={planetColor}
-            emissiveIntensity={hovered || isSelected ? 1.4 : 0.55}
+            emissiveIntensity={hovered || isSelected ? 1.4 : 0.5}
             roughness={0.25}
             metalness={0.7}
-            distort={hovered || isSelected ? 0.35 : 0.18}
-            speed={hovered || isSelected ? 3.0 : 1.5}
+            distort={hovered || isSelected ? 0.32 : 0.08}
+            speed={hovered || isSelected ? 2.5 : 0.8}
           />
         </mesh>
 
         {/* Volumetric Corona / Atmospheric Glow Shell */}
         <mesh ref={atmosphereRef} scale={[1.18, 1.18, 1.18]}>
-          <sphereGeometry args={[planetSize, 32, 32]} />
+          <sphereGeometry args={[planetSize, 16, 16]} />
           <meshBasicMaterial
             color={planetColor}
             transparent
-            opacity={hovered || isSelected ? 0.4 : 0.22}
+            opacity={hovered || isSelected ? 0.4 : 0.2}
             side={THREE.BackSide}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
@@ -139,11 +139,11 @@ export function ArtistPlanet({
         {/* Primary Planetary Ring */}
         {artist.totalPlays >= 3 && (
           <mesh ref={ring1Ref} rotation={[Math.PI / 3, 0.2, 0]}>
-            <ringGeometry args={[planetSize * 1.4, planetSize * 1.85, 64]} />
+            <ringGeometry args={[planetSize * 1.4, planetSize * 1.85, 36]} />
             <meshBasicMaterial
               color={planetColor}
               transparent
-              opacity={hovered || isSelected ? 0.55 : 0.35}
+              opacity={hovered || isSelected ? 0.55 : 0.3}
               side={THREE.DoubleSide}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
@@ -154,11 +154,11 @@ export function ArtistPlanet({
         {/* Secondary Outer Thin Ring for High-Play Stars */}
         {artist.totalPlays >= 6 && (
           <mesh ref={ring2Ref} rotation={[Math.PI / 3.4, -0.15, 0]}>
-            <ringGeometry args={[planetSize * 2.0, planetSize * 2.15, 64]} />
+            <ringGeometry args={[planetSize * 2.0, planetSize * 2.15, 36]} />
             <meshBasicMaterial
               color="#ffffff"
               transparent
-              opacity={hovered || isSelected ? 0.4 : 0.2}
+              opacity={hovered || isSelected ? 0.4 : 0.18}
               side={THREE.DoubleSide}
               blending={THREE.AdditiveBlending}
               depthWrite={false}

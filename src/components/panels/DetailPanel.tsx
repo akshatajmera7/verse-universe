@@ -52,7 +52,7 @@ export function DetailPanel() {
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 50, scale: 0.92 }}
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-          className="absolute top-20 right-6 w-96 max-h-[calc(100vh-7rem)] z-30 glass-panel rounded-2xl p-5 border border-white/15 shadow-2xl flex flex-col overflow-hidden backdrop-blur-xl"
+          className="absolute top-20 right-6 w-96 max-h-[calc(100vh-7rem)] z-30 cosmic-glass rounded-2xl p-5 border border-cyan-500/30 shadow-2xl flex flex-col overflow-hidden backdrop-blur-2xl"
         >
           {/* Header with Close */}
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
@@ -274,20 +274,39 @@ export function DetailPanel() {
                   </div>
                 </div>
 
-                {/* YouTube Link */}
-                {selectedObject.data.playbackUrl && (
-                  <motion.a
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    href={selectedObject.data.playbackUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 font-medium text-xs transition-all shadow-lg"
-                  >
-                    <span>Play on YouTube</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </motion.a>
-                )}
+                {/* Audio Waveform Preview from Stitch Design */}
+                <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-mono uppercase text-slate-400">
+                    <span>Frequency Resonance</span>
+                    <span className="text-purple-400">Harmonic Orbit</span>
+                  </div>
+                  <div className="flex items-end gap-1 h-8 pt-1">
+                    {[12, 28, 45, 60, 35, 75, 90, 65, 40, 85, 95, 70, 50, 80, 45, 30, 60, 85, 40, 20].map((h, idx) => (
+                      <div
+                        key={idx}
+                        className="flex-1 bg-gradient-to-t from-purple-500/30 to-cyan-400 rounded-t-sm"
+                        style={{ height: `${h}%` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions: YouTube Link & Camera Focus */}
+                <div className="space-y-2">
+                  {selectedObject.data.playbackUrl && (
+                    <motion.a
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      href={selectedObject.data.playbackUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 font-medium text-xs transition-all shadow-lg"
+                    >
+                      <span>Play on YouTube</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </motion.a>
+                  )}
+                </div>
 
                 {/* Uncertainty Disclaimer */}
                 <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-800/30 flex items-start gap-2 text-[11px] text-cyan-300/80 leading-relaxed">

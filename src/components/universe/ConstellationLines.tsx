@@ -130,9 +130,11 @@ export function ConstellationLines({ artists, reducedMotion = false }: Constella
       }
       progressList[i] = prog;
 
-      // Interpolate along the constellation line
-      const currentPos = new THREE.Vector3().lerpVectors(p.start, p.end, prog);
-      posAttr.setXYZ(i, currentPos.x, currentPos.y, currentPos.z);
+      // Interpolate along the constellation line with zero object allocations
+      const x = p.start.x + (p.end.x - p.start.x) * prog;
+      const y = p.start.y + (p.end.y - p.start.y) * prog;
+      const z = p.start.z + (p.end.z - p.start.z) * prog;
+      posAttr.setXYZ(i, x, y, z);
     }
 
     posAttr.needsUpdate = true;

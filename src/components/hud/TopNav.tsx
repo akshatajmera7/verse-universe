@@ -37,8 +37,18 @@ export function TopNav() {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-
-  // Search Results
+  // Global hotkey Ctrl+K / Cmd+K to open search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const trimmed = searchTerm.trim().toLowerCase();
   const matchedArtists = trimmed
     ? artists.filter((a) => a.name.toLowerCase().includes(trimmed)).slice(0, 4)
@@ -142,6 +152,20 @@ export function TopNav() {
 
       {/* Center Search & Filters */}
       <div className="flex items-center gap-3">
+        {/* Live Audio Equalizer Spectrum from Stitch Design */}
+        <div className="hidden xl:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/20 text-cyan-300 shadow-inner">
+          <div className="flex items-end gap-1 h-3.5 w-4.5">
+            <span className="w-0.5 bg-cyan-400 rounded-full eq-bar-1" />
+            <span className="w-0.5 bg-cyan-300 rounded-full eq-bar-2" />
+            <span className="w-0.5 bg-purple-400 rounded-full eq-bar-3" />
+            <span className="w-0.5 bg-pink-400 rounded-full eq-bar-4" />
+            <span className="w-0.5 bg-cyan-400 rounded-full eq-bar-5" />
+          </div>
+          <span className="text-[10px] font-mono tracking-wider text-slate-300 uppercase">
+            Orbital Audio: <span className="text-cyan-400 font-bold">Synchronized</span>
+          </span>
+        </div>
+
         {/* Search Input Box */}
         <div className="relative">
           <div className="relative flex items-center">
@@ -153,15 +177,19 @@ export function TopNav() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setSearchOpen(true)}
-              className="w-44 md:w-64 pl-8 pr-7 py-1.5 text-xs rounded-xl bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              className="w-44 md:w-64 pl-8 pr-12 py-1.5 text-xs rounded-xl bg-slate-900/80 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/30 transition-all"
             />
-            {searchTerm && (
+            {searchTerm ? (
               <button
                 onClick={() => setSearchTerm('')}
                 className="absolute right-2 text-slate-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
+            ) : (
+              <span className="hidden sm:flex absolute right-2.5 px-1.5 py-0.5 rounded border border-white/10 text-[9px] font-mono text-slate-500 pointer-events-none">
+                ⌘K
+              </span>
             )}
           </div>
 

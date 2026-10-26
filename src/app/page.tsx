@@ -88,9 +88,13 @@ export default function LandingPage() {
 
         {/* Hero Overlay Content */}
         <div className="relative z-10 max-w-4xl mx-auto space-y-6 pointer-events-none">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-panel border border-cyan-500/30 text-xs font-mono text-cyan-300 shadow-xl shadow-cyan-500/10 pointer-events-auto">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span>Interactive 3D Music Visualization Engine</span>
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full cosmic-glass border border-cyan-500/30 text-xs font-mono text-cyan-300 shadow-xl shadow-cyan-500/10 pointer-events-auto">
+            <div className="flex items-end gap-0.5 h-3 w-3.5">
+              <span className="w-0.5 bg-cyan-400 rounded-full eq-bar-1" />
+              <span className="w-0.5 bg-cyan-300 rounded-full eq-bar-2" />
+              <span className="w-0.5 bg-purple-400 rounded-full eq-bar-3" />
+            </div>
+            <span>Interactive 3D Music Galaxy Engine</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.08]">
@@ -107,16 +111,26 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 pointer-events-auto">
             <Link
               href="/app"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 font-extrabold text-sm transition-all shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 font-extrabold text-sm transition-all shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Explore Your Universe</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
+            <button
+              onClick={() => {
+                loadSampleData();
+                window.location.href = '/app';
+              }}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl cosmic-glass hover:bg-white/10 text-cyan-300 font-semibold text-sm transition-all flex items-center justify-center gap-2 border border-cyan-500/30 cursor-pointer shadow-lg"
+            >
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>Launch Live Demo</span>
+            </button>
             <Link
               href="/app/import"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl glass-panel glass-panel-hover text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl cosmic-glass hover:bg-white/10 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 border border-white/10"
             >
-              <UploadCloud className="w-4 h-4 text-cyan-400" />
+              <UploadCloud className="w-4 h-4 text-slate-300" />
               <span>Import Takeout File</span>
             </Link>
           </div>

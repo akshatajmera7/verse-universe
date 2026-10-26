@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Component, ErrorInfo, ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { AdaptiveDpr, AdaptiveEvents } from '@react-three/drei';
 import { useUniverseStore } from '@/lib/store/useUniverseStore';
 import { CelestialBackground } from './CelestialBackground';
 import { ArtistPlanet } from './ArtistPlanet';
@@ -114,13 +115,21 @@ export function UniverseCanvas() {
       <WebGLErrorBoundary>
         <Canvas
           camera={{ position: [0, 45, 95], fov: 50, near: 0.1, far: 1000 }}
+          dpr={graphicsQuality === 'ultra' ? [1, 2] : graphicsQuality === 'low' ? [1, 1] : [1, 1.5]}
+          performance={{ min: 0.6 }}
           gl={{
-            antialias: graphicsQuality !== 'low',
+            antialias: graphicsQuality === 'low',
             alpha: false,
             powerPreference: 'high-performance',
+            stencil: false,
+            depth: true,
           }}
           className="w-full h-full cursor-grab active:cursor-grabbing"
         >
+          {/* Adaptive Performance Monitors */}
+          <AdaptiveDpr pixelated={false} />
+          <AdaptiveEvents />
+
           {/* Cosmic Illumination */}
           <ambientLight intensity={0.5} />
           <directionalLight position={[60, 80, 50]} intensity={1.8} color="#e0e7ff" />

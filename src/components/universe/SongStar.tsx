@@ -45,7 +45,7 @@ export function SongStar({
   const isSelected = selectedObject?.type === 'song' && selectedObject.data.id === song.id;
 
   const starSize = Math.min(0.85, Math.max(0.35, Math.log10(song.totalPlays + 1) * 0.42));
-  const activeColor = new THREE.Color(starColor);
+  const activeColor = useMemo(() => new THREE.Color(starColor), [starColor]);
 
   useFrame((state, delta) => {
     if (!reducedMotion) {
@@ -90,13 +90,60 @@ export function SongStar({
         />
       </mesh>
 
-      {/* Orbiting Song Star with Luminous Trail */}
-      <Trail
-        width={hovered || isSelected ? 1.6 : 0.8}
-        length={reducedMotion ? 0 : 5}
-        color={starColor}
-        attenuation={(t) => t * t}
-      >
+      {/* Orbiting Song Star (Lightweight GPU path, Trail active only on hover/select) */}
+      {hovered || isSelected ? (
+        <Trail
+          width={1.4}
+          length={reducedMotion ? 0 : 4}
+          color={starColor}
+          attenuation={(t) => t * t}
+        >
+          <mesh
+            ref={meshRef}
+            onClick={handleClick}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              setHovered(true);
+            }}
+            onPointerOut={() => setHovered(false)}
+          >
+            <sphereGeometry args={[starSize * 1.3, 16, 16]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              emissive={activeColor}
+              emissiveIntensity={2.5}
+              roughness={0.15}
+              metalness={0.8}
+            />
+
+            {/* Pulsing Outer Glow Aura */}
+            <mesh ref={glowRef}>
+              <sphereGeometry args={[starSize * 1.3, 12, 12]} />
+              <meshBasicMaterial
+                color={activeColor}
+                transparent
+                opacity={0.5}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            {/* Floating 3D Billboard Label */}
+            <Billboard position={[0, starSize + 0.65, 0]}>
+              <Text
+                fontSize={0.4}
+                color={isSelected ? '#22d3ee' : '#ffffff'}
+                anchorX="center"
+                anchorY="middle"
+                outlineWidth={0.035}
+                outlineColor="#030712"
+              >
+                {song.cleanTitle.length > 22 ? `${song.cleanTitle.slice(0, 20)}...` : song.cleanTitle}
+              </Text>
+            </Billboard>
+          </mesh>
+        </Trail>
+      ) : (
         <mesh
           ref={meshRef}
           onClick={handleClick}
@@ -106,44 +153,44 @@ export function SongStar({
           }}
           onPointerOut={() => setHovered(false)}
         >
-          <sphereGeometry args={[hovered || isSelected ? starSize * 1.35 : starSize, 24, 24]} />
+          <sphereGeometry args={[starSize, 12, 12]} />
           <meshStandardMaterial
-            color={hovered || isSelected ? '#ffffff' : starColor}
+            color={starColor}
             emissive={activeColor}
-            emissiveIntensity={hovered || isSelected ? 2.8 : 1.2}
-            roughness={0.15}
-            metalness={0.85}
+            emissiveIntensity={1.2}
+            roughness={0.2}
+            metalness={0.7}
           />
 
           {/* Pulsing Outer Glow Aura */}
           <mesh ref={glowRef}>
-            <sphereGeometry args={[starSize * 1.25, 16, 16]} />
+            <sphereGeometry args={[starSize * 1.2, 10, 10]} />
             <meshBasicMaterial
               color={activeColor}
               transparent
-              opacity={hovered || isSelected ? 0.5 : 0.2}
+              opacity={0.18}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
             />
           </mesh>
 
-          {/* Floating 3D Billboard Label */}
-          {(hovered || isSelected || (showLabels && song.totalPlays >= 3)) && (
+          {/* Floating 3D Billboard Label (Only for notable stars) */}
+          {showLabels && song.totalPlays >= 5 && (
             <Billboard position={[0, starSize + 0.65, 0]}>
               <Text
-                fontSize={0.4}
-                color={isSelected ? '#22d3ee' : hovered ? '#ffffff' : '#94a3b8'}
+                fontSize={0.35}
+                color="#94a3b8"
                 anchorX="center"
                 anchorY="middle"
-                outlineWidth={0.035}
+                outlineWidth={0.03}
                 outlineColor="#030712"
               >
-                {song.cleanTitle.length > 22 ? `${song.cleanTitle.slice(0, 20)}...` : song.cleanTitle}
+                {song.cleanTitle.length > 20 ? `${song.cleanTitle.slice(0, 18)}...` : song.cleanTitle}
               </Text>
             </Billboard>
           )}
         </mesh>
-      </Trail>
+      )}
     </group>
   );
 }
