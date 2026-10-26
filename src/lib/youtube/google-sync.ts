@@ -28,11 +28,13 @@ export async function syncRealUserYouTubeData(
   const seenIds = new Set<string>();
   let lastGoogleApiError: string | null = null;
 
-  const apiKey =
+  const rawApiKey =
     customApiKey ||
     process.env.NEXT_PUBLIC_YOUTUBE_API_KEY ||
     process.env.YOUTUBE_API_KEY ||
     '';
+  // Standard Google Cloud API keys always begin with 'AIzaSy'. Omit incompatible keys to prevent 401/400 gateway rejection.
+  const apiKey = rawApiKey.startsWith('AIzaSy') ? rawApiKey : '';
 
   const withKey = (url: string) => {
     if (!apiKey) return url;

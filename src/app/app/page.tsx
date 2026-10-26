@@ -20,6 +20,8 @@ import {
   AlertCircle,
   Loader2,
   KeyRound,
+  LogIn,
+  X,
 } from 'lucide-react';
 
 export default function AppPage() {
@@ -66,10 +68,41 @@ export default function AppPage() {
       } catch {}
     } catch (err: any) {
       console.error(err);
-      setSyncError(err.message || 'Failed to sync your real YouTube data.');
+      const msg = err.message || 'Failed to sync your real YouTube data.';
+      setSyncError(msg);
+      setSyncStatus(null);
     } finally {
       setSyncingGoogle(false);
       syncInProgressRef.current = false;
+    }
+  };
+
+  const handleGoogleConnect = async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    setSyncingGoogle(true);
+    setSyncError(null);
+    setSyncStatus('Initiating Google sign-in...');
+    try {
+      localStorage.removeItem('google_yt_provider_token');
+      localStorage.removeItem('verse_has_synced_real_data');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/app`,
+          scopes: 'openid email profile https://www.googleapis.com/auth/youtube.readonly',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+            include_granted_scopes: 'true',
+          },
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setSyncError(err.message || 'Failed to start Google sign-in');
+      setSyncingGoogle(false);
+      setSyncStatus(null);
     }
   };
 
@@ -188,38 +221,58 @@ export default function AppPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-cyan-950/90 via-purple-950/80 to-slate-950/90 border-b border-cyan-500/25 px-4 py-2 flex items-center justify-between text-xs z-30 shadow-md backdrop-blur-md"
+          className="bg-gradient-to-r from-cyan-950/90 via-purple-950/80 to-slate-950/90 border-b border-cyan-500/25 px-4 py-2 flex flex-wrap items-center justify-between text-xs z-30 shadow-md backdrop-blur-md gap-2"
         >
           <div className="flex items-center gap-2 text-cyan-200">
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse shrink-0" />
             <span className="font-medium">
               {activities.length > 0
                 ? (syncStatus || `Google Connected (${activities.length} records loaded). Click Re-sync to refresh.`)
                 : (syncStatus || 'Google Account Connected. Click Sync to fetch your YouTube library.')}
             </span>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => performSync(providerToken)}
-            disabled={syncingGoogle}
-            className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50 cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncingGoogle ? 'animate-spin' : ''}`} />
-            <span>{syncingGoogle ? 'Re-syncing...' : 'Re-sync / Refresh'}</span>
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => performSync(providerToken)}
+              disabled={syncingGoogle}
+              className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingGoogle ? 'animate-spin' : ''}`} />
+              <span>{syncingGoogle ? 'Re-syncing...' : 'Re-sync / Refresh'}</span>
+            </motion.button>
+            <button
+              onClick={handleGoogleConnect}
+              disabled={syncingGoogle}
+              className="px-3 py-1.5 rounded-lg glass-button text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+              title="Re-authenticate with Google if session or permissions expired"
+            >
+              <LogIn className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Reconnect</span>
+            </button>
+          </div>
         </motion.div>
       ) : (
-        <div className="bg-slate-900/60 border-b border-white/10 px-4 py-2 flex items-center justify-between text-xs z-30 backdrop-blur-sm">
+        <div className="bg-slate-900/60 border-b border-white/10 px-4 py-2 flex flex-wrap items-center justify-between text-xs z-30 backdrop-blur-sm gap-2">
           <span className="text-slate-400">
             Want your real YouTube music? Sign in or sync with your Google account.
           </span>
           <div className="flex items-center gap-2">
-            <Link
-              href="/auth"
-              className="px-2.5 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold transition-colors"
+            <button
+              onClick={handleGoogleConnect}
+              disabled={syncingGoogle}
+              className="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold transition-colors flex items-center gap-1 cursor-pointer"
             >
-              Sign In with Google
+              <LogIn className="w-3.5 h-3.5" />
+              <span>{syncingGoogle ? 'Connecting...' : 'Sign In with Google'}</span>
+            </button>
+            <Link
+              href="/app/import"
+              className="px-2.5 py-1 rounded-lg glass-button text-slate-300 hover:text-white flex items-center gap-1 transition-colors"
+            >
+              <UploadCloud className="w-3 h-3 text-cyan-400" />
+              <span>Import Takeout File</span>
             </Link>
             <button
               onClick={() => setShowManualTokenModal(true)}
@@ -231,6 +284,48 @@ export default function AppPage() {
           </div>
         </div>
       )}
+
+      {/* Sync Error Alert Banner */}
+      <AnimatePresence>
+        {syncError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-rose-950/95 border-b border-rose-500/50 px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs z-30 shadow-lg backdrop-blur-md gap-3"
+          >
+            <div className="flex items-start gap-2.5 text-rose-200">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold text-rose-300">Sync Notice:</span>{' '}
+                <span className="text-rose-100">{syncError}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <button
+                onClick={handleGoogleConnect}
+                className="px-3 py-1 rounded-lg bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-slate-950 font-bold transition-all shadow cursor-pointer flex items-center gap-1"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Reconnect Google Account</span>
+              </button>
+              <Link
+                href="/app/import"
+                className="px-3 py-1 rounded-lg glass-button text-slate-200 hover:text-white transition-colors"
+              >
+                Import Takeout File
+              </Link>
+              <button
+                onClick={() => setSyncError(null)}
+                className="p-1 text-slate-400 hover:text-white cursor-pointer ml-1"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Manual Token Modal */}
       <AnimatePresence>
